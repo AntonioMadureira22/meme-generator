@@ -48,6 +48,16 @@ body {
     height: auto;
     margin-top: 2rem;
   }
+  footer{
+    margin-top: 40%;
+    height: 40px;
+    width: 100%;
+    background-color: darkgray;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+  }
   @keyframes change {
     0%{
         color: blue;
@@ -79,6 +89,13 @@ body {
       margin-top: 1rem;
     }
   }
+  /* For mobile devices */
+@media (max-width: 600px) {
+  footer {
+    margin-top: 20%;
+    font-size: 0.8rem;
+  }
+}
   
   /* Media queries for even smaller screens */
   @media (max-width: 480px) {

@@ -84,6 +84,7 @@ const MemeGeneratorComponent = () => {
       <button className="btn-1" onClick={handleDownloadClick}>
         Download Meme
       </button>
+      <footer>Made by Antonio Madureira</footer>
     </div>
   );
 };
