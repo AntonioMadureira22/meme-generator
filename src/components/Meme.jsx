@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
-import Meme from "../components/memes";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import "../components/meme.css";
 
@@ -16,13 +15,7 @@ const MemeGeneratorComponent = () => {
 
   const canvasRef = useRef(null);
 
-  useEffect(() => {
-    if (currentMeme) {
-      drawMeme();
-    }
-  }, [currentMeme, topText, bottomText, textPosition, textColor]);
-
-  const drawMeme = () => {
+  const drawMeme = useCallback(() => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
 
@@ -48,7 +41,13 @@ const MemeGeneratorComponent = () => {
         textPosition.bottomText.y
       );
     };
-  };
+  }, [currentMeme, topText, bottomText, textPosition, textColor]);
+
+  useEffect(() => {
+    if (currentMeme) {
+      drawMeme();
+    }
+  }, [currentMeme, topText, bottomText, textPosition, textColor, drawMeme]);
 
   const generateMeme = async () => {
     try {
