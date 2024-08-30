@@ -1,18 +1,58 @@
-import React, { useState } from "react";
-import Meme from "./memes";
+import React, { useState, useRef, useEffect } from "react";
+import Meme from "../components/memes";
 import axios from "axios";
-
 import "../components/meme.css";
 
 const MemeGeneratorComponent = () => {
   const [currentMeme, setCurrentMeme] = useState(null);
   const [topText, setTopText] = useState("");
   const [bottomText, setBottomText] = useState("");
+  const [textColor, setTextColor] = useState("#ffffff");
+  const [draggingText, setDraggingText] = useState(null);
+  const [textPosition, setTextPosition] = useState({
+    topText: { x: 350, y: 75 },
+    bottomText: { x: 350, y: 675 },
+  });
+
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (currentMeme) {
+      drawMeme();
+    }
+  }, [currentMeme, topText, bottomText, textPosition, textColor]);
+
+  const drawMeme = () => {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.src = currentMeme;
+
+    image.onload = () => {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, 700, 700);
+
+      context.font = "bold 48px sans-serif";
+      context.fillStyle = textColor;
+      context.textAlign = "center";
+      context.fillText(
+        topText.toUpperCase(),
+        textPosition.topText.x,
+        textPosition.topText.y
+      );
+      context.fillText(
+        bottomText.toUpperCase(),
+        textPosition.bottomText.x,
+        textPosition.bottomText.y
+      );
+    };
+  };
 
   const generateMeme = async () => {
     try {
       const response = await axios.get("https://api.imgflip.com/get_memes");
-      console.log(response);
       const memes = response.data.data.memes;
       const randomMemeIndex = Math.floor(Math.random() * memes.length);
       const randomMemeUrl = memes[randomMemeIndex].url;
@@ -22,61 +62,77 @@ const MemeGeneratorComponent = () => {
     }
   };
 
-  const handleTopTextChange = (event) => {
-    setTopText(event.target.value);
+  const handleTextChange = (event, type) => {
+    if (type === "top") {
+      setTopText(event.target.value);
+    } else {
+      setBottomText(event.target.value);
+    }
   };
 
-  const handleBottomTextChange = (event) => {
-    setBottomText(event.target.value);
+  const handleTextColorChange = (event) => {
+    setTextColor(event.target.value);
+  };
+
+  const handleMouseDown = (event, type) => {
+    setDraggingText(type);
+  };
+
+  const handleMouseMove = (event) => {
+    if (draggingText) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      setTextPosition((prev) => ({
+        ...prev,
+        [draggingText]: { x, y },
+      }));
+    }
+  };
+
+  const handleMouseUp = () => {
+    setDraggingText(null);
   };
 
   const handleDownloadClick = () => {
-    if (!currentMeme) {
-      return;
-    }
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 700;
-    canvas.height = 700;
-
-    const context = canvas.getContext("2d");
-
-    const image = new Image();
-    image.crossOrigin = "anonymous";
-    image.src = currentMeme;
-
-    image.onload = () => {
-      context.drawImage(image, 0, 0, 700, 700);
-
-      context.font = "bold 48px sans-serif";
-      context.fillStyle = "	#ffffff";
-      context.textAlign = "center";
-      context.fillText(topText.toUpperCase(), 350, 75);
-
-      context.fillText(bottomText.toUpperCase(), 350, 675);
-
-      const link = document.createElement("a");
-      link.download = "meme.png";
-      link.href = canvas.toDataURL();
-      link.click();
-    };
+    const canvas = canvasRef.current;
+    const link = document.createElement("a");
+    link.download = "meme.png";
+    link.href = canvas.toDataURL();
+    link.click();
   };
 
   return (
-    <div className="meme-generator">
+    <div
+      className="meme-generator"
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+    >
       <h2>Random Meme Generator</h2>
-      {currentMeme ? <Meme url={currentMeme} /> : null}
+      <canvas
+        ref={canvasRef}
+        width="700"
+        height="700"
+        onMouseDown={(e) => handleMouseDown(e, "topText")}
+      />
       <input
         type="text"
         placeholder="Top Text"
         value={topText}
-        onChange={handleTopTextChange}
+        onChange={(e) => handleTextChange(e, "top")}
       />
       <input
         type="text"
         placeholder="Bottom Text"
         value={bottomText}
-        onChange={handleBottomTextChange}
+        onChange={(e) => handleTextChange(e, "bottom")}
+        onMouseDown={(e) => handleMouseDown(e, "bottomText")}
+      />
+      <input
+        type="color"
+        value={textColor}
+        onChange={handleTextColorChange}
       />
       <button className="btn-1" onClick={generateMeme}>
         Generate Meme
@@ -90,7 +146,3 @@ const MemeGeneratorComponent = () => {
 };
 
 export default MemeGeneratorComponent;
-
-
-
-
